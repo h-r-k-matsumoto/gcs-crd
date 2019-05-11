@@ -17,10 +17,14 @@ limitations under the License.
 package gcs
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/option"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -40,4 +44,22 @@ func GenerateBacketFullName(name string) string {
 	}
 
 	return fmt.Sprintf("%s-%s-%s", name, string(s1), string(s2))
+}
+
+// NewGcsClient create storage client.
+func NewGcsClient(ctx context.Context, credential []byte) (*storage.Client, error) {
+	return storage.NewClient(ctx, option.WithCredentialsJSON(credential))
+}
+
+// CreateBucket create bucket.
+func CreateBucket(ctx context.Context, client *storage.Client, projectID, bucketName string) error {
+	bkt := client.Bucket(bucketName)
+	return bkt.Create(ctx, projectID, nil)
+}
+
+// IfExistsBucket return backet exists.
+func IfExistsBucket(ctx context.Context, client *storage.Client, projectID, bucketName string) bool {
+	bkt := client.Bucket(bucketName)
+	_, err := bkt.Attrs(ctx)
+	return (err == nil)
 }

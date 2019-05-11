@@ -7,23 +7,9 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - deployments
+  - secret
   verbs:
   - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - apps
-  resources:
-  - deployments/status
-  verbs:
-  - get
-  - update
-  - patch
 - apiGroups:
   - storage.matsumo.dev
   resources:

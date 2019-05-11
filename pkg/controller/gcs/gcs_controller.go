@@ -31,9 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"cloud.google.com/go/storage"
-	"google.golang.org/api/option"
 )
 
 var log = logf.Log.WithName("controller")
@@ -88,15 +85,16 @@ type ReconcileGcs struct {
 // TODO(user): Modify this Reconcile function to implement your Controller logic.  The scaffolding writes
 // a Deployment as an example
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=secret,verbs=get
 // +kubebuilder:rbac:groups=storage.matsumo.dev,resources=gcs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=storage.matsumo.dev,resources=gcs/status,verbs=get;update;patch
 func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	var err error
+
 	// Fetch the Gcs instance
 	instance := &storagev1alpha1.Gcs{}
 
-	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	err = r.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -108,10 +106,6 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-
-	log.Info("1***********" + instance.GetName())
-	log.Info("2***********" + instance.Spec.BucketName)
-	log.Info("3***********" + instance.Status.BucketName)
 
 	if instance.Spec.BucketName != instance.Status.BucketName {
 		instance.Status.BucketName = instance.Spec.BucketName
@@ -125,25 +119,24 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		log.Info("*********** Status Updated")
 	}
 
+	// initialize gcp service account credential.
 	secret := &corev1.Secret{}
 	err = r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.SecretName, Namespace: instance.Namespace}, secret)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	for k := range secret.Data {
-		log.Info(k)
-	}
-
+	credential := secret.Data[secretKeyName]
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(secret.Data[secretKeyName]))
+	client, err := NewGcsClient(ctx, credential)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	bkt := client.Bucket(instance.Status.BucketFullName)
-	exists, err := bkt.Attrs(ctx)
-	if err != nil || exists == nil {
-		log.Info("not found creating..." + instance.Status.BucketFullName)
-		if err := bkt.Create(ctx, instance.Spec.ProjectID, nil); err != nil {
+
+	//bucket operation.
+	exists := IfExistsBucket(ctx, client, instance.Spec.ProjectID, instance.Status.BucketFullName)
+	if !exists {
+		err := CreateBucket(ctx, client, instance.Spec.ProjectID, instance.Status.BucketFullName)
+		if err != nil {
 			return reconcile.Result{}, err
 		}
 	}
