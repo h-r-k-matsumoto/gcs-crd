@@ -20,10 +20,8 @@ import (
 	"context"
 
 	storagev1alpha1 "github.com/h-r-k-matsumoto/gcs-crd/pkg/apis/storage/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -85,7 +83,6 @@ type ReconcileGcs struct {
 // TODO(user): Modify this Reconcile function to implement your Controller logic.  The scaffolding writes
 // a Deployment as an example
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=apps,resources=secret,verbs=get
 // +kubebuilder:rbac:groups=storage.matsumo.dev,resources=gcs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=storage.matsumo.dev,resources=gcs/status,verbs=get;update;patch
 func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -119,15 +116,8 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		log.Info("*********** Status Updated")
 	}
 
-	// initialize gcp service account credential.
-	secret := &corev1.Secret{}
-	err = r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.SecretName, Namespace: instance.Namespace}, secret)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	credential := secret.Data[secretKeyName]
 	ctx := context.Background()
-	client, err := NewGcsClient(ctx, credential)
+	client, err := NewGcsClient(ctx)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

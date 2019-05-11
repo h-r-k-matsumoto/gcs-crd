@@ -29,7 +29,6 @@ type GcsSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	ProjectID  string `json:"projectID"`
 	BucketName string `json:"bucketName"`
-	SecretName string `json:"secretName"`
 }
 
 // GcsStatus defines the observed state of Gcs
@@ -39,7 +38,6 @@ type GcsStatus struct {
 	ProjectID      string `json:"projectID"`
 	BucketName     string `json:"bucketName"`
 	BucketFullName string `json:"bucketFullName"`
-	SecretName     string `json:"secretName"`
 }
 
 // +genclient

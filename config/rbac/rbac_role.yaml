@@ -5,12 +5,6 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - apps
-  resources:
-  - secret
-  verbs:
-  - get
-- apiGroups:
   - storage.matsumo.dev
   resources:
   - gcs

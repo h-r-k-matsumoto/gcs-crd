@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/api/option"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -47,8 +46,8 @@ func GenerateBacketFullName(name string) string {
 }
 
 // NewGcsClient create storage client.
-func NewGcsClient(ctx context.Context, credential []byte) (*storage.Client, error) {
-	return storage.NewClient(ctx, option.WithCredentialsJSON(credential))
+func NewGcsClient(ctx context.Context) (*storage.Client, error) {
+	return storage.NewClient(ctx)
 }
 
 // CreateBucket create bucket.
