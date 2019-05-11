@@ -6,7 +6,5 @@ metadata:
   name: gcs-sample
 spec:
   # Add fields here
-  foo: bar
-  bucketName: crd-gcs-alpna12
+  bucketName: crd-gcs-example
   projectID: <<set-your-gcp-projectid>>
-  secretName: <<gcs-service-account>>
