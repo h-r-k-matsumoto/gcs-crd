@@ -1,0 +1,12 @@
+apiVersion: storage.matsumo.dev/v1alpha1
+kind: Gcs
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: gcs-sample
+spec:
+  # Add fields here
+  foo: bar
+  bucketName: crd-gcs-alpna12
+  projectID: <<set-your-gcp-projectid>>
+  secretName: <<gcs-service-account>>

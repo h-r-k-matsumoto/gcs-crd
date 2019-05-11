@@ -1,0 +1,3 @@
+version: "1"
+domain: matsumo.dev
+repo: github.com/h-r-k-matsumoto/gcs-crd
