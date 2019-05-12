@@ -50,15 +50,21 @@ func NewGcsClient(ctx context.Context) (*storage.Client, error) {
 	return storage.NewClient(ctx)
 }
 
-// CreateBucket create bucket.
+// CreateBucket create gcs bucket.
 func CreateBucket(ctx context.Context, client *storage.Client, projectID, bucketName string) error {
 	bkt := client.Bucket(bucketName)
 	return bkt.Create(ctx, projectID, nil)
 }
 
-// IfExistsBucket return backet exists.
+// IfExistsBucket check gcs bucket.
 func IfExistsBucket(ctx context.Context, client *storage.Client, projectID, bucketName string) bool {
 	bkt := client.Bucket(bucketName)
 	_, err := bkt.Attrs(ctx)
 	return (err == nil)
+}
+
+// DeleteBucket delete gcs bucket.
+func DeleteBucket(ctx context.Context, client *storage.Client, bucketName string) error {
+	bkt := client.Bucket(bucketName)
+	return bkt.Delete(ctx)
 }

@@ -18,6 +18,7 @@ package gcs
 
 import (
 	"context"
+	"fmt"
 
 	storagev1alpha1 "github.com/h-r-k-matsumoto/gcs-crd/pkg/apis/storage/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -104,31 +105,90 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		return reconcile.Result{}, err
 	}
 
+	myFinalizerName := "bucket.finalizer.gcs.storage.matsumo.dev"
+
+	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Info("delete object.")
+		// The object is being deleted
+		if containsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
+			// our finalizer is present, so lets handle our external dependency
+			if err := r.deleteExternalDependency(instance); err != nil {
+				return reconcile.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			instance.ObjectMeta.Finalizers = removeString(instance.ObjectMeta.Finalizers, myFinalizerName)
+			if err := r.Update(context.Background(), instance); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+		// if deleted, logic finished.
+		return reconcile.Result{}, nil
+	}
+
+	// update finalizer,and bucket name.
+	modified := false
+	if !containsString(instance.ObjectMeta.Finalizers, myFinalizerName) {
+		instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, myFinalizerName)
+		modified = true
+	}
 	if instance.Spec.BucketName != instance.Status.BucketName {
 		instance.Status.BucketName = instance.Spec.BucketName
 		instance.Status.BucketFullName = GenerateBacketFullName(instance.Spec.BucketName)
-
-		log.Info("*********** Status Updating...")
-		err = r.Update(context.Background(), instance)
-		if err != nil {
+		modified = true
+	}
+	if modified {
+		if err := r.Update(context.Background(), instance); err != nil {
 			return reconcile.Result{}, err
 		}
-		log.Info("*********** Status Updated")
 	}
 
-	ctx := context.Background()
-	client, err := NewGcsClient(ctx)
+	client, err := NewGcsClient(context.Background())
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	//bucket operation.
-	exists := IfExistsBucket(ctx, client, instance.Spec.ProjectID, instance.Status.BucketFullName)
+	exists := IfExistsBucket(context.Background(), client, instance.Spec.ProjectID, instance.Status.BucketFullName)
 	if !exists {
-		err := CreateBucket(ctx, client, instance.Spec.ProjectID, instance.Status.BucketFullName)
+		log.Info(fmt.Sprintf("create bucket[ %s ]", instance.Status.BucketFullName))
+		err := CreateBucket(context.Background(), client, instance.Spec.ProjectID, instance.Status.BucketFullName)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
 	}
 	return reconcile.Result{}, nil
+}
+
+//  delete dependency bucket.
+func (r *ReconcileGcs) deleteExternalDependency(instance *storagev1alpha1.Gcs) error {
+	log.Info(fmt.Sprintf("delete bucket[ %s ]", instance.Status.BucketFullName))
+	client, err := NewGcsClient(context.Background())
+	if err != nil {
+		return err
+	}
+
+	err = DeleteBucket(context.Background(), client, instance.Status.BucketFullName)
+	return err
+}
+
+// Helper functions to check string from a slice of strings.
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper functions to remove string from slice.
+func removeString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
 }
