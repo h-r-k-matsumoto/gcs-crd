@@ -7,6 +7,11 @@ Remember that GKE has [Servive Broker](https://cloud.google.com/kubernetes-engin
 
 Development using [Kubebuilder](https://book.kubebuilder.io/).
 
+
+Details of this repository are described at the following site.
+Sorry, it will be in Japanese.
+https://qiita.com/h-r-k-matsumoto/items/ab7ead01c89af60119aa
+
 **It is still in development.**
 
 # How to use
