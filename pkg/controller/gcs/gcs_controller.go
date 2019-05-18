@@ -97,8 +97,6 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
-
-			//TODO: DELETE GCS Bucket?
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -137,11 +135,6 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		instance.Status.BucketFullName = GenerateBacketFullName(instance.Spec.BucketName)
 		modified = true
 	}
-	if modified {
-		if err := r.Update(context.Background(), instance); err != nil {
-			return reconcile.Result{}, err
-		}
-	}
 
 	client, err := NewGcsClient(context.Background())
 	if err != nil {
@@ -154,9 +147,20 @@ func (r *ReconcileGcs) Reconcile(request reconcile.Request) (reconcile.Result, e
 		log.Info(fmt.Sprintf("create bucket[ %s ]", instance.Status.BucketFullName))
 		err := CreateBucket(context.Background(), client, instance.Spec.ProjectID, instance.Status.BucketFullName)
 		if err != nil {
+			fatal := DeleteBucket(context.Background(), client, instance.Status.BucketFullName)
+			if fatal != nil {
+				log.Error(fatal, "bucket cleanup error.")
+			}
 			return reconcile.Result{}, err
 		}
 	}
+
+	if modified {
+		if err := r.Update(context.Background(), instance); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
 	return reconcile.Result{}, nil
 }
 
