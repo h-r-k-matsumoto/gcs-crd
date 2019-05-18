@@ -34,7 +34,12 @@ func TestStorageGcs(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "foo",
 			Namespace: "default",
-		}}
+		},
+		Spec: GcsSpec{
+			ProjectID:  "id",
+			BucketName: "bucket-name",
+		},
+	}
 	g := gomega.NewGomegaWithT(t)
 
 	// Test Create

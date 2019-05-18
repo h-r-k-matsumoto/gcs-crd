@@ -7,7 +7,7 @@ metadata:
   name: gcs.storage.matsumo.dev
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.bucketFullName
+  - JSONPath: .status.bucketFullName
     name: fullname
     type: string
   group: storage.matsumo.dev
@@ -33,10 +33,10 @@ spec:
         spec:
           properties:
             bucketName:
+              minLength: 1
               type: string
             projectID:
-              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                Important: Run "make" to regenerate code after modifying this file'
+              minLength: 1
               type: string
           required:
           - projectID
@@ -49,9 +49,6 @@ spec:
             bucketName:
               type: string
             projectID:
-              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                of cluster Important: Run "make" to regenerate code after modifying
-                this file'
               type: string
           required:
           - projectID

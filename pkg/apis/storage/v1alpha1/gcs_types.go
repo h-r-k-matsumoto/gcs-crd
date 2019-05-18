@@ -25,16 +25,14 @@ import (
 
 // GcsSpec defines the desired state of Gcs
 type GcsSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	ProjectID  string `json:"projectID"`
+	// +kubebuilder:validation:MinLength=1
+	ProjectID string `json:"projectID"`
+	// +kubebuilder:validation:MinLength=1
 	BucketName string `json:"bucketName"`
 }
 
 // GcsStatus defines the observed state of Gcs
 type GcsStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	ProjectID      string `json:"projectID"`
 	BucketName     string `json:"bucketName"`
 	BucketFullName string `json:"bucketFullName"`
@@ -45,7 +43,7 @@ type GcsStatus struct {
 
 // Gcs is the Schema for the gcs API
 // +k8s:openapi-gen=true
-// +kubebuilder:printcolumn:name="fullname",type="string",JSONPath=".spec.bucketFullName"
+// +kubebuilder:printcolumn:name="fullname",type="string",JSONPath=".status.bucketFullName"
 type Gcs struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
