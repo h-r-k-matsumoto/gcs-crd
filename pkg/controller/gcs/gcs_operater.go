@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"google.golang.org/api/googleapi"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -66,5 +67,12 @@ func IfExistsBucket(ctx context.Context, client *storage.Client, projectID, buck
 // DeleteBucket delete gcs bucket.
 func DeleteBucket(ctx context.Context, client *storage.Client, bucketName string) error {
 	bkt := client.Bucket(bucketName)
-	return bkt.Delete(ctx)
+	err := bkt.Delete(ctx)
+	if e, ok := err.(*googleapi.Error); ok {
+		if e.Code == 404 {
+			//already deleted.
+			return nil
+		}
+	}
+	return err
 }
